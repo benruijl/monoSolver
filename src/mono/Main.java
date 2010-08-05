@@ -28,7 +28,7 @@ public class Main implements GeneticAlgorithmFunction<Character> {
 		readCipher("cipher.txt");
 
 		/* There are 26 characters in the alphabet, so that's the genome size. */
-		nature = new Nature<Character>(this, 1000, 100, 26, 0.8, 0.00, true);
+		nature = new Nature<Character>(this, 100, 100, 26, 0.8, 0.00, true);
 		Genome<Character> best = nature.evolve();
 		System.out.println(transscribeCipherText(cipherText, best));
 
@@ -115,7 +115,8 @@ public class Main implements GeneticAlgorithmFunction<Character> {
 				Double sourceLogFreq = Math.log(entry.getValue());
 				double sigma = 2;
 				//System.out.println(logFreq + " " + sourceLogFreq);
-				fitness += Math.exp((logFreq - sourceLogFreq) / sigma);
+				fitness += 1.0/(Math.sqrt(2 * Math.PI) * sigma) * 
+				Math.exp(-(logFreq - sourceLogFreq) * (logFreq - sourceLogFreq) / ( 2 * sigma * sigma));
 			}
 		}
 
