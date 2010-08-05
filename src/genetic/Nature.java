@@ -7,10 +7,10 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 
 public class Nature<T> {
 	private final GeneticAlgorithmFunction<T> natureFunctions;
@@ -89,24 +89,32 @@ public class Nature<T> {
 	public void rankAndSortPopulations() {
 		totalFitness = 0;
 
-		Collection<Callable<?>> tasks = new LinkedList<Callable<?>>();
+		Collection<Callable<Object>> tasks = new LinkedList<Callable<Object>>();
+		int stepSize = populationSize / numThreads;
 
-		for (int i = 0; i < populationSize; i += populationSize / numThreads) {
+		for (int i = 0; i < populationSize; i += stepSize) {
 
 			List<Genome<T>> subList = new ArrayList<Genome<T>>();
-			if (i + 25 >= populationSize) {
+			if (i + stepSize >= populationSize) {
 				subList = currentGeneration.subList(i, populationSize - 1);
 			} else {
-				subList = currentGeneration.subList(i, i + 25);
+				subList = currentGeneration.subList(i, i + stepSize);
 			}
 
-			tasks.add(Executors.callable(new PopulationFitnessTester(natureFunctions, subList)));
-		}
-		
-		for (Future<?> f : pool.invokeAll(tasks)) {
-		    f.get();
+			tasks.add(Executors.callable(new PopulationFitnessTester(
+					natureFunctions, subList)));
 		}
 
+		/* Make sure all the threads are done by this point. */
+		try {
+			for (Future<?> f : pool.invokeAll(tasks)) {
+				f.get();
+			}
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		} catch (ExecutionException e) {
+			e.printStackTrace();
+		}
 
 		for (Genome<T> genome : currentGeneration) {
 			totalFitness += genome.getFitness();
