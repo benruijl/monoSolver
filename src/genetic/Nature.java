@@ -1,9 +1,16 @@
 package genetic;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 public class Nature<T> {
 	private final GeneticAlgorithmFunction<T> natureFunctions;
@@ -22,6 +29,29 @@ public class Nature<T> {
 	private double totalFitness;
 	private List<Double> cummulativeFitness;
 
+	/* Threading */
+	private final int numThreads = Runtime.getRuntime().availableProcessors();
+	private ExecutorService pool;
+
+	private class PopulationFitnessTester implements Runnable {
+		private final GeneticAlgorithmFunction<T> natureFunctions;
+		private final List<Genome<T>> genomes;
+
+		public PopulationFitnessTester(
+				GeneticAlgorithmFunction<T> natureFunctions,
+				List<Genome<T>> genomes) {
+			this.natureFunctions = natureFunctions;
+			this.genomes = genomes;
+		}
+
+		@Override
+		public void run() {
+			for (Genome<T> genome : genomes) {
+				genome.setFitness(natureFunctions.fitness(genome));
+			}
+		}
+	}
+
 	public Nature(GeneticAlgorithmFunction<T> natureFunctions,
 			int generationSize, int populationSize, int genomeSize,
 			double crossoverRate, double mutationRate, boolean keepBest) {
@@ -37,6 +67,8 @@ public class Nature<T> {
 		currentGeneration = new ArrayList<Genome<T>>(populationSize);
 		nextGeneration = new ArrayList<Genome<T>>(populationSize);
 		cummulativeFitness = new ArrayList<Double>();
+
+		pool = Executors.newFixedThreadPool(numThreads);
 
 		rng = new Random();
 	}
@@ -57,8 +89,26 @@ public class Nature<T> {
 	public void rankAndSortPopulations() {
 		totalFitness = 0;
 
+		Collection<Callable<?>> tasks = new LinkedList<Callable<?>>();
+
+		for (int i = 0; i < populationSize; i += populationSize / numThreads) {
+
+			List<Genome<T>> subList = new ArrayList<Genome<T>>();
+			if (i + 25 >= populationSize) {
+				subList = currentGeneration.subList(i, populationSize - 1);
+			} else {
+				subList = currentGeneration.subList(i, i + 25);
+			}
+
+			tasks.add(Executors.callable(new PopulationFitnessTester(natureFunctions, subList)));
+		}
+		
+		for (Future<?> f : pool.invokeAll(tasks)) {
+		    f.get();
+		}
+
+
 		for (Genome<T> genome : currentGeneration) {
-			genome.setFitness(natureFunctions.fitness(genome));
 			totalFitness += genome.getFitness();
 		}
 
