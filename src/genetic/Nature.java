@@ -150,12 +150,16 @@ public class Nature<T> {
 	/**
 	 * Starts the evolution.
 	 */
-	public void evolve() {
+	public Genome<T> evolve() {
 		/* Start with random genome. */
 		createGenomes();
 		rankAndSortPopulations();
 
 		for (int i = 0; i < generationSize; i++) {
+			if (i % 10 == 0) {
+				System.out.println("Starting on generation " + i);
+			}
+			
 			createNextGeneration();
 			rankAndSortPopulations();
 		}
@@ -166,6 +170,8 @@ public class Nature<T> {
 		System.out.println("\nBest result: "
 				+ currentGeneration.get(currentGeneration.size() - 1) + " with score " + 
 				currentGeneration.get(currentGeneration.size() - 1).getFitness());
+		
+		return currentGeneration.get(currentGeneration.size() - 1);
 	}
 
 }

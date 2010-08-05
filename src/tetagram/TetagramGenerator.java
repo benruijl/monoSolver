@@ -2,7 +2,6 @@ package tetagram;
 
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.HashMap;
@@ -40,8 +39,8 @@ public class TetagramGenerator {
 		
 		/* Print the map */
 		for (Map.Entry<String, Integer> entry : tetagrams.entrySet()) {
-			System.out.println(entry.getKey() + " " + (float)entry.getValue() / file.length());
-			out.write(entry.getKey() + " " + (float)entry.getValue() / file.length() + "\r\n");
+			System.out.println(entry.getKey() + " " + (float)entry.getValue() / (file.length() -3));
+			out.write(entry.getKey() + " " + (float)entry.getValue() / (file.length() - 3) + "\r\n");
 		}
 		
 		out.close();
