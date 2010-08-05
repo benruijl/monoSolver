@@ -28,7 +28,7 @@ public class Main implements GeneticAlgorithmFunction<Character> {
 		readCipher("cipher.txt");
 
 		/* There are 26 characters in the alphabet, so that's the genome size. */
-		nature = new Nature<Character>(this, 200, 100, 26, 0.8, 0.00, true);
+		nature = new Nature<Character>(this, 1000, 100, 26, 0.8, 0.00, true);
 		Genome<Character> best = nature.evolve();
 		System.out.println(transscribeCipherText(cipherText, best));
 
@@ -83,7 +83,7 @@ public class Main implements GeneticAlgorithmFunction<Character> {
 	public double fitnessTest(Genome<Character> genome) {
 		double fitness = 0;
 		for (int i = 0; i < genome.getGenes().size(); i++) {
-			fitness += genome.getGenes().get(i).charValue() == i + 97 ? 1 : 0;
+			fitness += genome.getGenes().get(i).charValue() == i + 65 ? 1 : 0;
 		}
 
 		return fitness;
@@ -106,19 +106,16 @@ public class Main implements GeneticAlgorithmFunction<Character> {
 		}
 
 		double fitness = 0;
-		double sigma = 0.0005f; // tweak!
-
 		for (Map.Entry<String, Double> entry : tetagrams.entrySet()) {
 			if (cipherTetagrams.containsKey(entry.getKey())) {
 				Double freq = cipherTetagrams.get(entry.getKey())
 						/ (double) (newText.length() - 3);
 				
-				//sigma = entry.getValue() * 0.10;
-				//fitness += expApprox((freq - entry.getValue()) / sigma);
-				
-				if (Math.abs(freq - entry.getValue()) < entry.getValue() * 0.50) {
-					fitness += 1;
-				}
+				Double logFreq = Math.log(freq);
+				Double sourceLogFreq = Math.log(entry.getValue());
+				double sigma = 2;
+				//System.out.println(logFreq + " " + sourceLogFreq);
+				fitness += Math.exp((logFreq - sourceLogFreq) / sigma);
 			}
 		}
 

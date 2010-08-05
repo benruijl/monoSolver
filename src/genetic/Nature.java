@@ -157,9 +157,12 @@ public class Nature<T> {
 
 		for (int i = 0; i < generationSize; i++) {
 			if (i % 10 == 0) {
+				System.out.println("Best fitness: "
+						+ currentGeneration.get(currentGeneration.size() - 1)
+								.getFitness());
 				System.out.println("Starting on generation " + i);
 			}
-			
+
 			createNextGeneration();
 			rankAndSortPopulations();
 		}
@@ -168,9 +171,11 @@ public class Nature<T> {
 		System.out.print(currentGeneration);
 
 		System.out.println("\nBest result: "
-				+ currentGeneration.get(currentGeneration.size() - 1) + " with score " + 
-				currentGeneration.get(currentGeneration.size() - 1).getFitness());
-		
+				+ currentGeneration.get(currentGeneration.size() - 1)
+				+ " with score "
+				+ currentGeneration.get(currentGeneration.size() - 1)
+						.getFitness());
+
 		return currentGeneration.get(currentGeneration.size() - 1);
 	}
 
