@@ -18,20 +18,54 @@ import java.util.Map;
 import java.util.Scanner;
 
 public class Main implements GeneticAlgorithmFunction<Character> {
-	Nature<Character> nature;
-	Map<String, Double> tetagrams;
-	String cipherText;
+	private Nature<Character> nature;
+	private Map<String, Double> tetagrams;
+	private String cipherText;
+	private final boolean doGenetic = true;
 
 	public Main() throws IOException {
 		tetagrams = new HashMap<String, Double>();
 		readTetagrams("tetagrams.txt");
 		readCipher("cipher.txt");
 
-		/* There are 26 characters in the alphabet, so that's the genome size. */
-		nature = new Nature<Character>(this, 100, 100, 26, 0.8, 0.01, true);
-		Genome<Character> best = nature.evolve();
-		System.out.println(transscribeCipherText(cipherText, best));
+		if (doGenetic) {
+			/*
+			 * There are 26 characters in the alphabet, so that's the genome
+			 * size.
+			 */
+			nature = new Nature<Character>(this, 100, 100, 26, 0.8, 0.00, true);
+			Genome<Character> best = nature.evolve();
+			System.out.println(transscribeCipherText(cipherText, best));
 
+		} else {
+			while (true) {
+				/* Keep on climbing from different starting points. */
+				hillClimb(randomGenome(26));
+			}
+		}
+
+	}
+
+	public Genome<Character> hillClimb(Genome<Character> genome) {
+		genome.setFitness(fitness(genome));
+
+		for (int i = 0; i < genome.getGenes().size() - 1; i++) {
+			for (int j = i + 1; j < genome.getGenes().size(); j++) {
+				double oldFitness = genome.getFitness();
+				Collections.swap(genome.getGenes(), i, j);
+				double fitness = fitness(genome);
+
+				if (fitness > oldFitness) {
+					genome.setFitness(fitness);
+					return hillClimb(genome);
+				} else {
+					Collections.swap(genome.getGenes(), i, j);
+				}
+			}
+		}
+
+		System.out.println(transscribeCipherText(cipherText, genome));
+		return genome;
 	}
 
 	public void readCipher(String filename) throws FileNotFoundException {
@@ -106,17 +140,19 @@ public class Main implements GeneticAlgorithmFunction<Character> {
 		}
 
 		double fitness = 0;
-		for (Map.Entry<String, Double> entry : tetagrams.entrySet()) {
-			if (cipherTetagrams.containsKey(entry.getKey())) {
-				Double freq = cipherTetagrams.get(entry.getKey())
-						/ (double) (newText.length() - 3);
-				
-				Double logFreq = Math.log(freq);
-				Double sourceLogFreq = Math.log(entry.getValue());
-				double sigma = 2;
-				//System.out.println(logFreq + " " + sourceLogFreq);
-				fitness += 1.0/(Math.sqrt(2 * Math.PI) * sigma) * 
-				Math.exp(-(logFreq - sourceLogFreq) * (logFreq - sourceLogFreq) / ( 2 * sigma * sigma));
+		double sigma = 2.0;
+		for (Map.Entry<String, Integer> entry : cipherTetagrams.entrySet()) {
+			if (tetagrams.containsKey(entry.getKey())) {
+				Double sourceLogFreq = Math.log(tetagrams.get(entry.getKey()));
+				Double logFreq = Math.log(entry.getValue()
+						/ (double) (newText.length() - 3));
+
+				/* TODO: check if the factor in front of the exp is required. */
+				fitness += 1.0
+						/ (Math.sqrt(2 * Math.PI) * sigma)
+						* Math.exp(-(logFreq - sourceLogFreq)
+								* (logFreq - sourceLogFreq)
+								/ (2 * sigma * sigma));
 			}
 		}
 
