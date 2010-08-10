@@ -5,10 +5,12 @@ import genetic.Genome;
 import genetic.Nature;
 
 import java.io.BufferedReader;
+import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -21,11 +23,11 @@ public class Main implements GeneticAlgorithmFunction<Character> {
 	private Nature<Character> nature;
 	private Map<String, Double> tetagrams;
 	private String cipherText;
-	private final boolean doGenetic = true;
+	private final boolean doGenetic = false;
 
 	public Main() throws IOException {
 		tetagrams = new HashMap<String, Double>();
-		readTetagrams("tetagrams.txt");
+		readTetagrams("tetagrams.dat");
 		readCipher("cipher.txt");
 
 		if (doGenetic) {
@@ -90,20 +92,24 @@ public class Main implements GeneticAlgorithmFunction<Character> {
 	}
 
 	public void readTetagrams(String filename) throws IOException {
-		BufferedReader d = new BufferedReader(new InputStreamReader(
-				new FileInputStream(filename)));
+		InputStream file = new FileInputStream(filename);
+		DataInputStream in = new DataInputStream(file);
 
-		String line;
-		while ((line = d.readLine()) != null) {
-			Scanner scanner = new Scanner(line);
-			scanner.useDelimiter(" ");
+		int size = in.readInt();
 
-			String tet = scanner.next();
-			Double freq = Double.valueOf(scanner.next());
+		for (int i = 0; i < size; i++) {
+			String tet = new String();
+			for (int j = 0; j < 4; j++) {
+				tet += in.readChar();
+			}
+
+			Double freq = in.readDouble();
 			tetagrams.put(tet, freq);
-
-			scanner.close();
 		}
+
+		System.out.println("Tetagrams read.");
+
+		in.close();
 	}
 
 	/**
@@ -148,11 +154,9 @@ public class Main implements GeneticAlgorithmFunction<Character> {
 						/ (double) (newText.length() - 3));
 
 				/* TODO: check if the factor in front of the exp is required. */
-				fitness += 1.0
-						/ (Math.sqrt(2 * Math.PI) * sigma)
-						* Math.exp(-(logFreq - sourceLogFreq)
-								* (logFreq - sourceLogFreq)
-								/ (2 * sigma * sigma));
+				/* 1.0 / (Math.sqrt(2 * Math.PI) * sigma) */
+				fitness += Math.exp(-(logFreq - sourceLogFreq)
+						* (logFreq - sourceLogFreq) / (2 * sigma * sigma));
 			}
 		}
 
