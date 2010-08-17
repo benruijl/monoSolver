@@ -149,7 +149,7 @@ public class Main implements GeneticAlgorithmFunction<Character> {
 		double sigma = 2.0;
 		for (Map.Entry<String, Integer> entry : cipherTetagrams.entrySet()) {
 			if (tetagrams.containsKey(entry.getKey())) {
-				Double sourceLogFreq = Math.log(tetagrams.get(entry.getKey()));
+				Double sourceLogFreq = tetagrams.get(entry.getKey());
 				Double logFreq = Math.log(entry.getValue()
 						/ (double) (newText.length() - 3));
 
